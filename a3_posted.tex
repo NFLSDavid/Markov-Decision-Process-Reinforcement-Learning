@@ -1,0 +1,383 @@
+\documentclass[12pt]{article}
+
+\input{cs486_assign_preamble.tex}
+
+\lhead{CS 486/686}
+\chead{Winter 2023}
+\rhead{Assignment 3}
+\cfoot{v1.0}
+\lfoot{\copyright Wenhu Chen 2022}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+\title{CS 486/686 Assignment 3 \\ Winter 2023 \\ (90 marks) }
+\author{Wenhu Chen}
+\date{Due Date: 11:59 pm March 28th}
+
+\begin{document}
+
+\maketitle
+
+\section*{Instructions}
+
+\begin{itemize}
+\item
+Submit the signed academic integrity statement any written solutions in a file to the Q0 box in the A3 project on Crowdmark. \textbf{(5 marks)}.
+
+\item Submit your written answers to questions 1 (Decision Network) and 2 (MDP \& RL) as PDF files to the Q1 and Q2 boxes respectively in the A3 project on Crowdmark. I strongly encourage you to complete your write-up in LaTeX, using this source file. If you do, in your submission, please replace the author with your name and student number. Please also remove the due date, the Instructions section, and the Learning Goals section. Thank you!
+
+\item Submit any code to \verb+Marmoset+ at \url{https://marmoset.student.cs.uwaterloo.ca/}. Be sure to submit your code to the project named \texttt{Assignment 3 - Final}. 
+
+\item
+This assignment is to be done individually.
+
+\item
+Late submissions will be accepted until 3 days after the deadline with a 5\% penalty for each day.
+
+\item
+Lead TAs: 
+\begin{itemize}
+\item 
+Jess Gano (\url{jgano@uwaterloo.ca})
+\end{itemize}
+The TA's office hours will be scheduled and posted on LEARN and Piazza.
+\end{itemize}
+
+\newpage
+\section*{Modification History}
+\begin{itemize}
+    \item \textbf{v1.1} (March 8, 2023) fixed typo in Accept column for $P(Accept=false\, |\, quality = high,\, apply = false)$ from T to F in page 5.
+\end{itemize}
+
+\newpage
+\section*{Academic Integrity Statement}
+
+{\color{red} Your submission include this academic integrity statement with your signature (typed or signed name). It is worth 5 marks.} 
+
+I declare the following statements to be true:
+
+\begin{itemize}
+\item 
+The work I submit here is entirely my own.
+
+\item 	
+I have not shared and will not share any of my code with anyone at any point. 
+
+\item 
+I have not posted and will not post my code on any public or private forum or website.
+
+\item 	
+I have not discussed and will not discuss the contents of this assessment with anyone at any point.
+
+\item 
+I have not posted and will not post the contents of this assessment and its solutions on any public or private forum or website. 
+
+\item 
+I will not search for assessment solutions online.
+
+\item
+I have not used an automated code assistance tool (such as GitHub Copilot).
+
+\item 
+I am aware that misconduct related to assessments can result in significant penalties, possibly including failure in the course and suspension. This is covered in Policy 71: \url{https://uwaterloo.ca/secretariat/policies-procedures-guidelines/policy-71}.
+\end{itemize}
+
+By typing or writing my full legal name below, I confirm that I have read and understood the academic integrity statement above.
+
+\vspace{30pt}
+
+\begin{minipage}{12cm}
+\hrulefill
+\end{minipage}
+
+\newpage
+\section{Decision Network (30 marks)}
+\label{question_hmm}
+
+Your are taking a course and deciding whether to apply for graduate school. Assuming that your diligence will affect the course score. More work, higher score! Based on the course score, you need to decide on whether to ask for a recommendation letter from the lecturer to include in your grad application material. The recommendation letter can affect the quality of your grad application material, based upon which you will decide whether to file the grad school application or to give up and go for a job. The quality of your application material will influence whether you are accepted or not.
+
+If you do apply and get accepted, you will be exuberant. If you do apply but get rejected, you will be really sad. If you do not apply and go for a job, you will be moderately happy.
+
+The conditional probability tables are listed below (T means true, F means false, L means low, H means high):
+
+P(diligence=True) = P(diligence=False) = 0.5
+\begin{table}[!htb]
+    \centering
+    \begin{tabular}{c|c|c}
+        \hline
+        Score & Diligence & P(Score $\mid$ Diligence)  \\
+        \hline
+        H     &  T        & 0.7                 \\
+        L     &  T        & 0.3                 \\
+        H     &  F        & 0.2                 \\
+        L     &  F        & 0.8                 \\
+        \hline
+    \end{tabular}
+\end{table}
+
+Ask means ``Ask for recommendation letter or not".
+\begin{table}[!htb]
+    \centering
+    \begin{tabular}{c|c|c|c}
+        \hline
+        Ask   & Score  &  Quality & P(Quality $\mid$ Score, Ask)  \\
+        \hline
+        T     &  H   &  H     & 0.7                 \\
+        T     &  H   &  L     & 0.3                 \\
+        T     &  L   &  H     & 0.4                 \\
+        T     &  L   &  L     & 0.6                 \\
+        F     &  H   &  H     & 0.5                 \\
+        F     &  H   &  L     & 0.5                 \\
+        F     &  L   &  H     & 0.5                 \\
+        F     &  L   &  L     & 0.5                 \\
+        \hline
+    \end{tabular}
+\end{table}
+
+Accept means ``whether you will receive acceptance to a grad school".
+\begin{table}[!h]
+    \centering
+    \begin{tabular}{c|c|c|c}
+        \hline
+        Quality & Apply  & Accept  & P(Accept $\mid$ Quality, Apply)  \\
+        \hline
+        H     &   T      &  T       &  0.8                 \\
+        H     &   T      &  F       &  0.2                 \\
+        H     &   F      &  T       &  0                   \\
+        H     &   F      &  F       &  1.0                 \\
+        L     &   T      &  T       &  0.2                \\
+        L     &   T      &  F       &  0.8                \\
+        L     &   F      &  T       &  0                  \\
+        L     &   F      &  F       &  1.0                 \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\begin{table}[!h]
+    \centering
+    \begin{tabular}{c|c|c}
+        \hline
+        Apply  & Accept   & Utility               \\
+        \hline
+        T      &  T       &  100                  \\
+        T      &  F       &  30                   \\
+        F      &  T       &  -                    \\
+        F      &  F       &  60                   \\
+        \hline
+    \end{tabular}
+\end{table}
+
+
+\textbf{Please complete the following tasks:}
+\begin{enumerate}
+    \item Please draw the Decision Network and define all the factors
+    \begin{markscheme}
+        (5 marks)
+        \begin{itemize}
+            \item Correctly draw the decision network figure (3 marks)
+            \item Define all the factors                     (2 marks)
+        \end{itemize}
+    \end{markscheme}
+
+    \item Please use Variable Elimination Algorithm to identify the optimal policy and compute expected utility.
+    \begin{markscheme}
+        (25 marks)
+        \begin{itemize}
+            \item Correctly execute the computation step by step (10 marks)
+            \item Correctly calculate all the intermediate numbers and find the policy (5 marks)
+            \item Correctly compute expected utility (10 marks)
+        \end{itemize}
+    \end{markscheme}
+\end{enumerate}
+
+
+\newpage
+\section{Markov Decision Process \& Reinforcement Learning (60 marks)}
+\label{question_dt}
+
+You will explore a set of grid worlds using (asynchronous) value iteration algorithm and passive adaptive dynamic programming (ADP).
+
+Section \ref{sec:grid_world} describes the grid worlds on which your code will be tested on. Section \ref{sec:value_iter} and \ref{sec:passive_adp} describes the 2 algorithms you are tasked to implement for this assignment.
+
+We have provided 6 Python files. Please read the comments in the source code carefully.
+
+\begin{table}[ht!]
+    \centering
+    \begin{tabular}{llp{10.5cm}}
+        $1.$ & \texttt{GridWorldTemplate.py} & Defines the gird world environment. This file also contains helper functions you can use for your implementation. \textbf{Do not change anything in this file.}\\[5pt]
+        $2. $ & \texttt{GridWorld.py} & An extension of the \texttt{GridWorldTemplate.py} containing function(s) you are tasked to implement. \\[5pt]
+        $3.$ & \texttt{AgentTemplate.py} & Contains the agent class and helper functions you can use for your implementation. \textbf{Do not change anything in this file.} \\[5pt]
+        $4.$ & \texttt{Agent.py} & An extension of \texttt{AgentTemplate.py} containing function signatures for value iteration algorithm and passive ADP. \\[5pt]
+        $5.$ & \texttt{utils.py} & Contains the \texttt{Action} and \texttt{Move} classes and navigation-specific helper functions. \textbf{Do not change anything in this file.} \\
+        $6.$ & \texttt{main.py} & A driver file where you can test your implementations. \\
+    \end{tabular}
+    \label{tab:files_desc}
+\end{table}
+
+\textbf{Please complete the following tasks:}
+\begin{enumerate}
+    \item Recall the Bellman equation,
+    \begin{align*}
+        V^*(s) = R(s) + \gamma \max_a \sum_{s'} P(s'|s,a)V^*(s').
+    \end{align*}
+    What are the values of the goal states of the 3x4 grid world from Section \ref{sec:simple_env}? Justify your answer with either a mathematical solution or a written explanation with no more than 3 sentences. 
+    \begin{markscheme}
+        (4 marks)
+        \begin{itemize}
+            \item Correct state value for goal states (2 mark)
+            \item A reasonable explanation (2 marks)
+        \end{itemize}
+    \end{markscheme}
+    
+    \item Implement the empty functions in \texttt{GridWorld.py} and \texttt{Agent.py}. Zip and submit these two files to Marmoset. For implementation details and usage examples, please refer to the docstrings.
+    \begin{markscheme}
+        (40 marks)
+        \begin{itemize}
+            \item \texttt{fill\_T}\, in\, \texttt{GridWorld.py}\\
+            (2 public tests + 2 private tests) * 2 marks = 8 marks
+            \item \texttt{value\_iteration}\, in \texttt{Agent.py}\\ (2 public tests + 3 private tests) * 2 marks = 10 marks
+            \item \texttt{find\_policy}\, in \texttt{Agent.py}\\ (1 public test + 1 private test) * 2 marks = 4 marks
+             \item \texttt{make\_move}\, in \texttt{GridWorld.py}\\ (1 public test + 1 private test) * 2 marks = 4 marks
+            \item \texttt{passive\_adp}\, in \texttt{Agent.py}\\ (2 public tests + 5 private tests) * 2 marks = 14 marks
+        \end{itemize}
+    \end{markscheme}
+    
+    \item Run your implementation of the value iteration algorithm on the 3x4 grid world from Section \ref{sec:simple_env} with $\gamma = 0.99$. What is the path (i.e., optimal action at each state) from the start state to the goal following the optimal policy? What is the expected discounted total reward obtained from following the optimal policy?    
+    \begin{markscheme}
+        (2 marks)
+        \begin{itemize}
+            \item Correct path (1 marks)
+            \item Expected discounted total reward within acceptable range (1 mark)
+        \end{itemize}
+    \end{markscheme}
+
+    \item Given the 3x4 grid world from Section \ref{sec:simple_env}, suppose the reward of entering the the goal state at \texttt{(2,3)} is \texttt{+1000} and \texttt{(1,3)} is \texttt{-1000}. Run your implementation of the value iteration algorithm with default $\gamma$ and the modified rewards.
+ 
+    How did the change in rewards affect the optimal policy? Explain and justify any change that occurred.
+
+    \begin{markscheme}
+        Reasonable explanation (3 marks)
+    \end{markscheme}
+
+    \item Run your passive ADP implementation on the 3x4 grid world from Section \ref{sec:simple_env} keeping the default $\gamma$ and setting \texttt{adp\_iters} to 2000. Plot the state values for the for the following states: \texttt{(0, 0)}, \texttt{(0, 3)}, \texttt{(2, 2)}, \texttt{(1, 2)} against number of iterations. What do you observe in the plot? Explain and justify any notable trends.
+    
+    \begin{markscheme}
+    (6  marks)
+        \begin{itemize}
+            \item Reasonable plot (2 marks)
+            \item Reasonable explanation (4 marks)
+        \end{itemize}
+    \end{markscheme}
+
+    \item Run your value iteration algorithm and passive ADP implementations on the 3x4 grid world from Section \ref{sec:simple_env} with default parameters. List down the state values and 2 differences you observe. Discuss possible reasons for these differences in no more than 5 sentences.
+    \begin{markscheme} (5 marks)
+        \begin{itemize}
+            \item State value within the acceptable range (2 marks)
+            \item Reasonable explanation (3 marks)
+        \end{itemize}
+    \end{markscheme}
+    
+\end{enumerate}
+
+\subsection{Grid World environment} \label{sec:grid_world}
+
+\subsubsection*{A simple 3x4 grid world} \label{sec:simple_env}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[scale=0.65]{grid_world.png}
+    % \caption{3x4 grid world}
+    \label{fig:grid_world}
+\end{figure}
+
+As a testing environment, you are provided an implementation of the 3x4 grid world often used as an example in lectures. The start state is at \texttt{(0,0)} and the goal states are at \texttt{(2,3)} and \texttt{(1,3)}. A wall barrier within the grid world is situated at \texttt{(0,2)} and \texttt{(1,1)}.
+
+The are four available actions that an agent can take: up, right, down, and left. The actions are implemented following a clockwise direction such that \texttt{Action.UP = 0}, \texttt{Action.RIGHT = 1}, \texttt{Action.DOWN = 2}, and \texttt{Action.LEFT = 3}.
+
+The agent moves in the intended direction with probability 0.8 (\texttt{prob\_direct}), to its left with probability 0.1, and to its right with probability 0.1 (\texttt{prob\_lateral}). The agent will stay in the same grid if it moves in a given direction and hits a wall. For any goal states $s_g$, for all states $s'$, and all actions $a$, $P(s' | s_g, a) = 0$.
+
+The immediate reward for entering any state that is not a goal state is -0.04. When the agent enters the goal state at \texttt{(2,3)} it will receive a \texttt{+1} reward; however, if it enters \texttt{(1, 3)}, it will receive a \texttt{-1} reward. For this assignment, rewards will be implemented as a 2D array and should be created following the example below.
+    \begin{verbatim}
+        rewards = np.array([
+            [-0.04, -0.04, -0.04, -0.04],
+            [-0.04, -0.04, -0.04, -1.00],
+            [-0.04, -0.04, -0.04, 1.000]
+        ])
+    \end{verbatim} 
+    \vspace{-20pt}
+
+We have provided an example of how to define a grid world environment in \texttt{main.py}.
+
+Function(s) specific to the Grid World environment that you need to implement are explained below.
+
+\begin{itemize}
+    \item \texttt{fill\_T(self)}: initializes and populates the transition probabilities for all possible ($s,\, a,\, s'$) combinations.
+\end{itemize}
+
+\subsubsection*{Unseen grid world environment} \label{sec:unseen_env}
+Your value iteration algorithm and passive ADP implementations will be tested on a set of grid world environments for marking. These would not be made available to you; however, you will be provided 2 grid worlds of varying dimensions and setup, in addition to the 3x4 grid world to test some edge cases. You are encouraged to create your own grid worlds for personal testing use.
+
+The unseen grid worlds will have different dimensions and at least one goal state. The agent can take the same four available action at each state. If it moves in a direction and hits a wall, the agent will stay in the same grid. The transition probabilities (\texttt{prob\_direct} and \texttt{prob\_lateral} from \texttt{GridWorld.py}) will vary in the unseen grid worlds.
+
+% Similar to the simple 3x4 grid world, the immediate reward for entering any state that is not a goal state is also -0.04. The reward for entering a goal state is either \texttt{+1} or \texttt{-1}.
+
+\underline{\textbf{Note:}}  It's important to keep \texttt{np.random.seed(486)} in \texttt{main.py} to ensure results are reproducible for functions that depend on psuedo-random \texttt{numpy} functions namely \texttt{make\_move}, \texttt{simulate}, and \texttt{passive\_ADP}. \texttt{np.random.seed(486)} must be run first before executing any of these functions.
+
+
+\subsection{Value Iteration Algorithm} \label{sec:value_iter}
+In value iteration, the agent finds the optimal state values $V(s)$ (i.e., the expected utility of the optimal policies starting from state $s$) by iteratively updating its estimates after which, it derives an optimal policy based said estimates.
+
+Let's first define some variables you will need in your implementation:
+\begin{itemize}
+    \item \textbf{$\gamma$}: discount factor $\in \mathopen( 0, 1 \,\mathclose]$; default = \texttt{0.99}
+    \item \textit{R(s)}: the immediate reward for entering state \textit{s}. 
+    \item \textit{V(s)}: state values with initial values set to \texttt{0}.
+    \item \textit{$P(s'| s,a)$}: probability of transitioning to state \textit{s'} if the agent executes action \textit{a} at state \textit{s}.
+\end{itemize}
+
+Recall the algorithm to solving for $V(s)$ iteratively from Lecture 14:
+\begin{enumerate}
+
+    \item Start with arbitrary initial values for $V_0(s)$. For this assignment, $V(s)$ are initialized to 0.
+    \item At the $i^{th}$ iteration, compute $V_{i+1}(s)$ as follows:
+    $$V_{i+1}(s) \leftarrow R(s) + \gamma \max_a \sum_{s'} P(s'|s, a) V_i(s')$$\\
+    Note that the right-hand side uses values from the previous iteration.
+    \item Terminate when $\max_s \, |V_i(s) - V_{i+1}(s)|$  is small enough. For this assignment, the default \texttt{tolerance} is 0.001.
+\end{enumerate}
+
+Functions specific to this algorithm that you need to implement are listed below. Please refer to the docstrings in \texttt{Agent.py} for more details.
+\begin{itemize}
+    \item \texttt{value\_iteration(self, gamma, tolerance, max\_iter)}: performs value iteration on the loaded environment following the steps above then returns the state values and number of iterations.
+    \item \texttt{find\_policy(self, V)}: finds the best action to take at each state based on the state values obtained (i.e., computing $\pi(s) = \argmax_a \sum_{s'} P(s'|s,a) V(s')$ ).
+\end{itemize}
+
+
+\subsection{Passive Adaptive Dynamic Programming (ADP)} \label{sec:passive_adp}
+
+In Passive ADP, the goal of the agent is to learn the expected value of following a fixed policy $\pi$ i.e., $V^\pi(s)$, without knowledge of the transition probabilities or the reward function.
+
+Recall the Passive ADP algorithm from Lecture 15:
+\begin{enumerate}
+    \item Repeat steps 2 to 5.
+    \item Follow policy $\pi$ and generate an experience $\langle s, a, s', r' \rangle$.
+    \item Update the reward function: $R(s') \leftarrow r'$.
+    \item Update the transition probability.
+    \begin{align*}
+        &N(s,a) = N(s, a) + 1 \\
+        &N(s,a, s') = N(s, a, s') + 1 \\
+        &P(s'|s,a) = N(s,a,s') / N(s,a)
+    \end{align*}
+    \item Derive $V^\pi(s)$ by using the Bellman equations.
+    $$V(s) = R(s) + \gamma \sum_{s'} P(s'|s, \pi(s)) V(s')$$
+\end{enumerate}
+
+Functions specific to this algorithm that you need to implement are listed below. Please refer to the docstrings in \texttt{Agent.py} for more details.
+
+\begin{itemize}
+    \item \texttt{make\_move(self, state, action)}: performs a single step in the environment under stochasticity based on the probability distribution and returns a tuple containing coordinates of $s'$ and immediate reward of entering $s'$.
+    \item \texttt{passive\_adp(self, policy, gamma, adp\_iters)}: performs passive ADP on a given policy using simulations from the environment and returns the state value array obtained by following given policy and a list containing the state values from every iteration.
+\end{itemize}
+
+\underline{\textbf{Note:}} You are not allowed to use the true transition probabilities from the environment. Your implementation must learn an estimate of the transition probabilities through experiences from \texttt{GridWorld.simulate}.
+
+\end{document}
