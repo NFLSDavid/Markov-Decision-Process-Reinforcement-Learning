@@ -118,7 +118,10 @@ class GridWorldTemplate:
         raise NotImplementedError
 
     def simulate(self) -> Tuple[Tuple[int, int],
-                                Callable[[int], Tuple[int, Tuple[int, int], float, bool]]]:
+                                Callable[[int],
+                                         Tuple[int, Tuple[int, int],
+                                         float,
+                                         bool]]]:
         """
         Enables simulated environment which starts at the start state and at each time step,
         an action can be taken which probabilistically takes you to a next state and grants a reward.

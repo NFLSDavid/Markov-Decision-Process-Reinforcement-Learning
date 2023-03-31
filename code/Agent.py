@@ -1,3 +1,5 @@
+import venv
+
 import numpy as np
 from typing import Tuple, Union, List, TypeVar
 from utils import Action, Move
@@ -108,5 +110,50 @@ class Agent(AgentTemplate):
         :param adp_iters: number of the passive ADP iterations
         :return: state value array based on the given policy, and all Vs per iteration
         """
-        
-        return
+        V_adp = np.zeros(self.env.state_dim)
+        all_Vs = [V_adp]
+        Rewards = np.zeros(self.env.state_dim)
+        action_num = len(Action.space())
+        x: int = self.env.state_dim[0]
+        y: int = self.env.state_dim[1]
+        N = np.zeros((x, y, action_num, x, y))
+        P = np.zeros((x, y, action_num, x, y))
+        for idx in range(adp_iters):
+            updated_V = V_adp.copy()
+            for state in self.env.goal_states:
+                updated_V[state] = V_adp[state]
+            cur_state, callback_fn = self.env.simulate()
+            done = False
+            while not done:
+                # step 2:
+                cur_action = policy[cur_state]
+                time_step, next_state, reward, done = callback_fn(cur_action)
+
+                # step 3:
+                Rewards[next_state] = reward
+
+                # step 4:
+                N[cur_state][cur_action][next_state] += 1
+                sa_num = N[cur_state][cur_action].sum()
+                for i in range(x):
+                    for j in range(y):
+                        P[cur_state][cur_action][i][j] = N[cur_state][cur_action][i][j] / sa_num
+                cur_state = next_state
+
+                # step 5:
+                for i in range(x):
+                    for j in range(y):
+                        if (i, j) in self.env.walls:
+                            continue
+                        elif (i, j) in self.env.goal_states:
+                            updated_V[i][j] = Rewards[i][j]
+                        else:
+                            tmp_sum = 0
+                            for dest_i in range(x):
+                                for dest_j in range(y):
+                                    tmp_sum += (P[i][j][policy[i][j]][dest_i][dest_j] * V_adp[dest_i][dest_j])
+                            updated_V[i][j] = Rewards[i][j] + gamma * tmp_sum
+
+                V_adp = updated_V.copy()
+            all_Vs.append(V_adp)
+        return V_adp, all_Vs
